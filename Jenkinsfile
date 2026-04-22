@@ -1,8 +1,8 @@
 pipeline {
-    agent {
+    agent  {
         label 'catalogue'
     }
-    environment {
+    environment { 
         appVersion = ''
         REGION = "us-west-1"
         ACC_ID = "439481669447"
@@ -10,7 +10,7 @@ pipeline {
         COMPONENT = "catalogue"
     }
     options {
-        timeout(time: 30, unit: 'MINUTES')
+        timeout(time: 30, unit: 'MINUTES') 
         disableConcurrentBuilds()
     }
     parameters {
@@ -18,9 +18,9 @@ pipeline {
         choice(name: 'deploy_to', choices: ['dev', 'qa', 'prod'], description: 'Pick the Environment')
     }
     stages {
-        stage('Check Status') {
-            steps {
-                script {
+        stage('Check Status'){
+            steps{
+                script{
                     withAWS(credentials: 'aws-creds', region: 'us-west-1') {
                         def deploymentStatus = sh(returnStdout: true, script: "kubectl rollout status deployment/catalogue --timeout=30s -n $PROJECT || echo FAILED").trim()
                         if (deploymentStatus.contains("successfully rolled out")) {
@@ -33,7 +33,8 @@ pipeline {
                             def rollbackStatus = sh(returnStdout: true, script: "kubectl rollout status deployment/catalogue --timeout=30s -n $PROJECT || echo FAILED").trim()
                             if (rollbackStatus.contains("successfully rolled out")) {
                                 error "Deployment is Failure, Rollback Success"
-                            } else {
+                            }
+                            else{
                                 error "Deployment is Failure, Rollback Failure. Application is not running"
                             }
                         }
@@ -50,34 +51,35 @@ pipeline {
                             kubectl get nodes
                             kubectl apply -f 01-namespace.yaml
                             sed -i "s/IMAGE_VERSION/${params.appVersion}/g" values-${params.deploy_to}.yaml
+                            #helm upgrade --install $COMPONENT -f values-${params.deploy_to}.yaml -n $PROJECT .
                             kubectl apply -f application.yaml
                         """
                     }
                 }
             }
         }
-        stage('Functional Testing') {
-            when {
+        stage('Functional Testing'){
+            when{
                 expression { params.deploy_to == "dev" }
             }
-            steps {
-                script {
+            steps{
+                script{
                     echo "Run functional test cases"
                 }
             }
         }
-        stage('Integration Testing') {
-            when {
+        stage('Integration Testing'){
+            when{
                 expression { params.deploy_to == "qa" }
             }
-            steps {
-                script {
+            steps{
+                script{
                     echo "Run Integration test cases"
                 }
             }
         }
         stage('PROD Deploy') {
-            when {
+            when{
                 expression { params.deploy_to == "prod" }
             }
             steps {
@@ -94,15 +96,15 @@ pipeline {
             }
         }
     }
-    post {
-        always {
+    post { 
+        always { 
             echo 'I will always say Hello again!'
             deleteDir()
         }
-        success {
+        success { 
             echo 'Hello Success'
         }
-        failure {
+        failure { 
             echo 'Hello Failure'
         }
     }
