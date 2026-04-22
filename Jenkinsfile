@@ -1,11 +1,11 @@
 pipeline {
     agent  {
-        label 'AGENT-1'
+        label 'catalogue'
     }
     environment { 
         appVersion = ''
-        REGION = "us-east-1"
-        ACC_ID = "160885265516"
+        REGION = "us-west-1"
+        ACC_ID = "439481669447"
         PROJECT = "roboshop"
         COMPONENT = "catalogue"
     }
@@ -17,12 +17,11 @@ pipeline {
         string(name: 'appVersion', description: 'Image version of the application')
         choice(name: 'deploy_to', choices: ['dev', 'qa', 'prod'], description: 'Pick the Environment')
     }
-    // Build
     stages {
         stage('Check Status'){
             steps{
                 script{
-                    withAWS(credentials: 'aws-creds', region: 'us-east-1') {
+                    withAWS(credentials: 'aws-creds', region: 'us-west-1') {
                         def deploymentStatus = sh(returnStdout: true, script: "kubectl rollout status deployment/catalogue --timeout=30s -n $PROJECT || echo FAILED").trim()
                         if (deploymentStatus.contains("successfully rolled out")) {
                             echo "Deployment is success"
@@ -39,7 +38,6 @@ pipeline {
                                 error "Deployment is Failure, Rollback Failure. Application is not running"
                             }
                         }
-
                     }
                 }
             }
@@ -47,7 +45,7 @@ pipeline {
         stage('Deploy') {
             steps {
                 script {
-                    withAWS(credentials: 'aws-creds', region: 'us-east-1') {
+                    withAWS(credentials: 'aws-creds', region: 'us-west-1') {
                         sh """
                             aws eks update-kubeconfig --region $REGION --name "$PROJECT-${params.deploy_to}"
                             kubectl get nodes
@@ -60,25 +58,21 @@ pipeline {
                 }
             }
         }
-
-        
-        // API Testing
         stage('Functional Testing'){
             when{
-                expression { params.deploy_to = "dev" }
+                expression { params.deploy_to == "dev" }
             }
-             steps{
+            steps{
                 script{
                     echo "Run functional test cases"
                 }
             }
         }
-        // All components testing
         stage('Integration Testing'){
             when{
-                expression { params.deploy_to = "qa" }
+                expression { params.deploy_to == "qa" }
             }
-             steps{
+            steps{
                 script{
                     echo "Run Integration test cases"
                 }
@@ -86,11 +80,11 @@ pipeline {
         }
         stage('PROD Deploy') {
             when{
-                expression { params.deploy_to = "prod" }
+                expression { params.deploy_to == "prod" }
             }
             steps {
                 script {
-                    withAWS(credentials: 'aws-creds', region: 'us-east-1') {
+                    withAWS(credentials: 'aws-creds', region: 'us-west-1') {
                         sh """
                             echo "get cr number"
                             echo "check with in the deployment window"
@@ -102,7 +96,6 @@ pipeline {
             }
         }
     }
-
     post { 
         always { 
             echo 'I will always say Hello again!'
