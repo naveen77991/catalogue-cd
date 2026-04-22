@@ -1,5 +1,5 @@
 deployment:
-  imageURL: 160885265516.dkr.ecr.us-east-1.amazonaws.com/roboshop/catalogue
+  imageURL: 439481669447.dkr.ecr.us-west-1.amazonaws.com/catalogue
   imageVersion: 1.0.0
 hpa:
   maxReplicas: 10
