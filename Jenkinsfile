@@ -35,8 +35,8 @@ pipeline {
                         kubectl create namespace ${NAMESPACE} --dry-run=client -o yaml | kubectl apply -f -
                         helm upgrade --install ${COMPONENT} \
                             -f values-${params.deploy_to}.yaml \
-                            --set image.tag=${params.appVersion} \
-                            --set image.repository=${ACC_ID}.dkr.ecr.${REGION}.amazonaws.com/${COMPONENT} \
+                            --set deployment.imageVersion=${params.appVersion} \
+                            --set deployment.imageURL=${ACC_ID}.dkr.ecr.${REGION}.amazonaws.com/${COMPONENT} \
                             -n ${NAMESPACE} .
                     """
                 }
